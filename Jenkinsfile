@@ -2,7 +2,7 @@ pipeline {
     agent any
 
     environment {
-        DOCKER_IMAGE = "ganeshdemo/jenkins-docker-demo"
+        DOCKER_IMAGE = "sontiganesh/jenkins-docker-demo"
     }
 
     stages {
@@ -20,16 +20,26 @@ pipeline {
             }
         }
 
-        stage('Run Container') {
+        stage('Push to Docker Hub') {
             steps {
-                echo "Running container..."
-                sh 'docker run --rm $DOCKER_IMAGE:latest'
+                echo "Pushing image to Docker Hub..."
+                withCredentials([usernamePassword(credentialsId: 'dockerhub-creds', usernameVariable: 'USER', passwordVariable: 'PASS')]) {
+                    sh 'echo $PASS | docker login -u $USER --password-stdin'
+                    sh 'docker push $DOCKER_IMAGE:latest'
+                }
+            }
+        }
+
+        stage('Deploy to EC2') {
+            steps {
+                echo "Deploying container on EC2..."
+                // We'll add actual EC2 deployment next
             }
         }
 
         stage('Cleanup') {
             steps {
-                echo "Removing image..."
+                echo "Cleaning up local image..."
                 sh 'docker rmi -f $DOCKER_IMAGE:latest || true'
             }
         }
